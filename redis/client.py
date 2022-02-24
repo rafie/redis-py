@@ -1176,7 +1176,10 @@ class Redis(AbstractRedis, RedisModuleCommands, CoreCommands, SentinelCommands):
         """Execute a command and return a parsed response"""
         pool = self.connection_pool
         command_name = args[0]
-        conn = self.connection or pool.get_connection(command_name, **options)
+        need_custom = options != {} and 'decode_responses' not in options \
+                      and NEVER_DECODE not in options
+        conn = self.connection and not need_custom or \
+               pool.get_connection(command_name, **options)
 
         try:
             return conn.retry.call_with_retry(
